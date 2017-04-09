@@ -1,0 +1,19 @@
+{
+  "name": "ddz",
+  "version": "1.0.0",
+  "description": "",
+  "main": "./net/tcpsvr.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/AlexYu1987/ddz.git"
+  },
+  "author": "Alex.Y",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/AlexYu1987/ddz/issues"
+  },
+  "homepage": "https://github.com/AlexYu1987/ddz#readme"
+}
