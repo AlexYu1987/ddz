@@ -1,0 +1,76 @@
+<!DOCTYPE html>
+<html>
+     <head>
+		<meta http-equiv='Content-Type' content='text/html; charset=UTF-8' />
+		<script src="http://127.0.0.1:3000/socket.io/socket.io.js"></script>
+	 </head>
+     <body>
+		<script>
+			function linkerror(msg){
+				alert(msg);
+			}
+		</script>
+		<script>
+			//通信key
+			var m_nNetKey = 0; 
+			//桌面状态
+			var m_szDesk = {id:0, state:0, num:0}; 
+			//玩家信息
+			var m_szPlayer = [{uid:0,nick:"",head:"",net:0},{uid:0,nick:"",head:"",net:0},{uid:0,nick:"",head:"",net:0}];
+			//自身信息
+			var m_szUser = {uid:0,nick:"",head:"",net:0};
+			//玩家牌面
+			var m_szOtherCard = [{},{},{}];
+			//自身牌面
+			var m_szCard = {};
+
+			window.onload = function () {
+				initNet();
+			}
+			function initNet()
+			{
+				if(typeof io != "function"){
+					linkerror("服务器维护中...");
+					return false;
+				} 
+				this.socket = io.connect('ws://127.0.0.1:3000');
+				if(typeof this.socket != "object"){
+					linkerror("服务器维护中.");
+					return false;
+				}
+				//首次通信消息
+				this.socket.on('setNetKey', function(data){
+					m_nNetKey = data.netkey; 
+					//模拟登陆指定桌号
+					this.emit("login", {netkey:m_nNetKey, openid:"wx_test"});
+				});
+				//回应login
+				this.socket.on('onLoginOk', function(data){
+					alert(data.openid);
+				});
+				this.socket.on('onLoginError', function(data){
+					alert(data.msg);
+				});
+				//重连数据
+				this.socket.on('onReLink', function(data){
+					
+				});
+				//创建桌子,或进入别人的桌子
+				this.socket.on('onGameStart', function(data){
+					
+				});
+				//桌面数据布局(全)
+				this.socket.on('SendDesk', function(data){
+					
+				});
+				
+				return true;
+			}
+			function webSend(fun, agv)
+			{
+				agv["netkey"] = m_nNetKey;
+				this.socket.emit("message", {fun:fun, agv:agv});
+			}
+		</script>
+	 </body>
+</html>	
