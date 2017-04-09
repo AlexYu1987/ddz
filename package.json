@@ -15,5 +15,15 @@
   "bugs": {
     "url": "https://github.com/AlexYu1987/ddz/issues"
   },
-  "homepage": "https://github.com/AlexYu1987/ddz#readme"
+  "homepage": "https://github.com/AlexYu1987/ddz#readme",
+  "dependencies": {
+    "colors": "^1.1.2",
+    "events": "^1.1.1",
+    "express": "^4.15.2",
+    "http": "0.0.0",
+    "iconv-lite": "^0.4.15",
+    "mysql": "^2.13.0",
+    "socket.io": "^1.7.3",
+    "util": "^0.10.3"
+  }
 }
