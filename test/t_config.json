@@ -1,0 +1,26 @@
+{
+	"host" : "rm-uf65s84ip1a4lww7s.mysql.rds.aliyuncs.com",
+	"database" : "nanj",
+	"user" : "nanjmj",
+	"password" : "Hyhd1234",
+	"port" : "3306",
+	
+	"webport" : 3009,
+	"tcport" : 3010,
+	"tcphost" : "localhost",
+
+	"minver" : 229,
+
+	"shownet" : 0,
+	"writenet" : 1,
+	"logpath" : "C:/nodejs/log/nanj/",
+
+	"historydays" : 0,
+	"signcard" : 0,
+	"sharecard" : 6,
+	"regcard" : 10,
+
+	"openreg" : 0,
+
+	"appname" : "ddz"
+}
