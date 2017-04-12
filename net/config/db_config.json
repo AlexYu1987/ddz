@@ -1,13 +1,13 @@
 {
-	"host" : "rm-uf65s84ip1a4lww7s.mysql.rds.aliyuncs.com",
-	"database" : "nanj",
-	"user" : "nanjmj",
-	"password" : "Hyhd1234",
+	"host" : "localhost",
+	"database" : "ddz",
+	"user" : "root",
+	"password" : "123456",
 	"port" : "3306",
 	
 	"webport" : 3009,
 	"tcport" : 3010,
-	"tcphost" : "nanjn.fly2014.com",
+	"tcphost" : "localhost",
 
 	"minver" : 229,
 
@@ -22,5 +22,5 @@
 
 	"openreg" : 0,
 
-	"appname" : "麻友南京麻将"
+	"appname" : "ddz"
 }
