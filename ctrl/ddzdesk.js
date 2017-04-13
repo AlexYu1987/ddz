@@ -23,6 +23,40 @@ Date.prototype.Format = function (fmt) {
 
 function DdzDesk(id,key,owner,rule,num){
 	jsBase.call(this);
+	this.name="DdzDesk";
+
+	this.m_nMaxUser=3;
+	this.m_nMaxNum=8;
+	this.t_out=11;
+	this.m_pOutTimer=null;
+
+	this.deskid=id;
+	this.key=key;
+	this.ownerid=ownerid;
+	this.m_vUser=Array(this.m_nMaxUser);
+	this.m_nState=0;//游戏等待中 0 叫地主阶段 1 走牌阶段2 一局结束等待2 无效桌子 -1
+	this.m_nGameState=0;//一局牌状态 1 等待出牌 2 等待吃碰杠胡 3 等待补花
+	this.m_nLunNum=num;
+
+	this.m_CurUser=null;
+	this.m_Zhuang=null;
+	this.m_ChgZhuang=true;
+	this.m_ZhuangNum=0;
+	this.m_vPai=null;
+	this.m_nHuang=0;
+	this.m_Win=null;
+	this.m_Loser=null;
+	this.m_MoNum=0;
+	this.m_OutNum=0;
+	this.m_HuData=null;
+	this.m_GenZhuang={pai:null,num:0};
+
+	this.m_BiXia=[false,false];
+
+	this.m_StartTime;
+
+	this.m_Rule={game:"nanj",num:1};
+	this.tr("new MjDesk:"+this.deskid+","+num);
 
 	this.initDesk=function(){
 

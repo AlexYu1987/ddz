@@ -7,4 +7,4 @@
 		"headimgurl": "/usr/node/abc.png",
 		"sex": 0
 	}
-}#[
+}#
