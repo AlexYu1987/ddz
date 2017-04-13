@@ -1,0 +1,10 @@
+{
+	"fun": "Login",
+	"agv": {
+		"ver": "1000",
+		"openid": "abcd",
+		"nickname": "xiaoxiao",
+		"headimgurl": "/usr/node/abc.png",
+		"sex": 0
+	}
+}#[
