@@ -1,7 +1,7 @@
 var js_util = require('util');
 var js_base = require('./baseobj');
 var js_mj = require('./mjctrl');
-var js_pai = require('./game/pai');
+var js_pai = require('./game/ddzpai');
 var js_sql = require('../net/db/db');
 
 module.exports = DdzUser
@@ -24,6 +24,7 @@ function DdzUser(suser, uid, ip) {
 	this.m_Money = 0;
 	this.m_Card = 0;
 	this.m_fen = 0;
+	this.m_closeDesk = 0;
 	//TODO:action需要重新设计参数。
 	this.m_Action = {
 		eve: 'non',
@@ -79,6 +80,22 @@ function DdzUser(suser, uid, ip) {
 		this.deskctrl.onGameStart(this);
 		this.deskctrl.SendState(null);
 	};
+
+	this.onQuitOK = function(isowner) {
+		if (isowner) {
+			this.start = false;
+		} else {
+			this.deskctrl = null;
+			this.start = false;
+			this.m_closeDesk = 0;
+			this.chairid = -1;
+			this.m_Pai = null;
+		}
+		this.toC("OnQuitDeskOK", {
+			uid: this.uid,
+			nick: this.m_sNick
+		});
+	}
 
 	this.regNetuser = function(netuser, ip) {
 		this.tr("regNetuser:uid=" + this.uid);

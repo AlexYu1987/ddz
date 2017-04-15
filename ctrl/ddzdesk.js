@@ -39,7 +39,7 @@ function DdzDesk(id, key, owner, rule, num) {
 	this.m_nLunNum = num;
 
 	this.m_CurUser = null;
-	this.m_Zhuang = null;
+	this.m_first = null;//上游
 	this.m_ChgZhuang = true;
 	this.m_ZhuangNum = 0;
 	this.m_vPai = null;
@@ -104,7 +104,27 @@ function DdzDesk(id, key, owner, rule, num) {
 		return [1, chairid];
 	};
 
-	this.quitDesk = function() {
+	this.quitDesk = function(user, close) {
+		if (user == null) {
+			return -1;
+		}
+		if (this.m_nState > 0) {
+			this.SendUser(null);
+			return 0;
+		}
+		var cid = this.isInDesk(user);
+		if (cid == -1) {
+			return 2;
+		}
+		if (close) {
+			this.DelUserByID(cid);
+		} else {
+			if (this.ownerid != user.uid) {
+				this.DelUserByID(cid);
+			} else {
+				this.m_vUser[user.chairid].onQuitOk(true);
+			}
+		}
 
 	};
 
@@ -162,12 +182,54 @@ function DdzDesk(id, key, owner, rule, num) {
 
 	};
 
-	this.onGameStart = function() {
-		
+	this.onGameStart = function(user) {
+		if (this.m_nState == -1) {
+			this.QuitDesk(user, true);
+			this.SendState(null);
+			return;
+		}
+		//游戏已经开始
+		if (this.m_nState == 1 || this.m_nState == 2) {
+			return;
+		}
+
+		if (this.IsEnd()) {
+			this.DeskClose();
+			this.QuitDesk(user, true);
+			this.SendState(null);
+			return;
+		}
+
+		var user;
+		for(var i=0; i<this.m_vUser; ++i){
+			user=this.m_vUser[i];
+			if (user==null){
+				this.SendUser(null);
+				return;
+			}
+
+			if(user.deskctrl==null){
+				if(user.UserJoinDesk(this)){
+					continue;
+				}
+				this.DelUserByID(i);
+				return;
+			}
+
+			if(user.start==false){
+				this.SendUser(null);
+				return;
+			}
+		}
+
+		this.m_StartTime=new Date().Format("yyyy-MM-dd hh:mm:ss");
+		this.m_nState=1;
+		this.SendAll("GameStart",{lun:this.m_nLunNum});
+		this.startgame();
 	};
 
 	this.startGame = function() {
-
+		//TODO:开始游戏主体逻辑
 	};
 
 	this.shuffle = function() {
@@ -227,33 +289,33 @@ function DdzDesk(id, key, owner, rule, num) {
 		}
 	};
 
-	this.SendDesk=function(action){
+	this.SendDesk = function(action) {
 		//TODO:重构桌面牌状态
-		if( this.m_vPai==null ) return;
-		if( this.m_nGameState==0 ) return;//游戏结束
+		if (this.m_vPai == null) return;
+		if (this.m_nGameState == 0) return; //游戏结束
 
-		var data={};
-		data['gamestate']=this.m_nGameState;
-		data['curuser']='0';
-		if( this.m_CurUser!=null ) data['curuser']=this.m_CurUser.chairid;
-		data['leftpai']=this.GetHuangLeft();
-		data['outpai']=null;
-		var outpai=this.m_CurUser.m_Pai.outpai;
-		if( this.m_CurUser.m_Pai!=null ) data['outpai']=this.m_CurUser.m_Pai.GetMiniPai(outpai);
+		var data = {};
+		data['gamestate'] = this.m_nGameState;
+		data['curuser'] = '0';
+		if (this.m_CurUser != null) data['curuser'] = this.m_CurUser.chairid;
+		data['leftpai'] = this.GetHuangLeft();
+		data['outpai'] = null;
+		var outpai = this.m_CurUser.m_Pai.outpai;
+		if (this.m_CurUser.m_Pai != null) data['outpai'] = this.m_CurUser.m_Pai.GetMiniPai(outpai);
 
-		var hua=0;
-		var vuser=Array(this.m_nMaxUser);
-		for( var i=0; i<this.m_nMaxUser; i++ ){
-			if( i>=this.m_vUser.length ) break;
-			if( this.m_vUser[i]==null ) continue;
-			vuser[i]=this.m_vUser[i].GetDeskData();
-			hua+=this.m_vUser[i].m_Pai.GetHuaNum();
+		var hua = 0;
+		var vuser = Array(this.m_nMaxUser);
+		for (var i = 0; i < this.m_nMaxUser; i++) {
+			if (i >= this.m_vUser.length) break;
+			if (this.m_vUser[i] == null) continue;
+			vuser[i] = this.m_vUser[i].GetDeskData();
+			hua += this.m_vUser[i].m_Pai.GetHuaNum();
 		}
-		data['user']=vuser;
-		data['action']=action;
-		data['lhua']=20-hua;
+		data['user'] = vuser;
+		data['action'] = action;
+		data['lhua'] = 20 - hua;
 
-		this.SendAll("UpdatePai",data);
+		this.SendAll("UpdatePai", data);
 	};
 }
 
