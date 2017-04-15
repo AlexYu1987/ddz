@@ -163,7 +163,7 @@ function DdzDesk(id, key, owner, rule, num) {
 	};
 
 	this.onGameStart = function() {
-
+		
 	};
 
 	this.startGame = function() {

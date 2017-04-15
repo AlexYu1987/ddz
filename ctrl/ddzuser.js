@@ -14,9 +14,9 @@ function DdzUser(suser, uid, ip) {
 	this.netuser = null;
 	this.start = false;
 	this.outtime = 0;
-	this.tyclose=false;
-	this.deskctrl=null;
-	this.chairid=-1;
+	this.tyclose = false;
+	this.deskctrl = null;
+	this.chairid = -1;
 
 	this.m_sNick = "testuser";
 	this.m_sHead = "test";
@@ -24,6 +24,11 @@ function DdzUser(suser, uid, ip) {
 	this.m_Money = 0;
 	this.m_Card = 0;
 	this.m_fen = 0;
+	//TODO:action需要重新设计参数。
+	this.m_Action = {
+		eve: 'non',
+		param: null
+	};
 
 	this.onInit = function netuser(netuser, uid, ip) {
 		debugger;
@@ -39,26 +44,41 @@ function DdzUser(suser, uid, ip) {
 		this.regNetuser(netuser, ip);
 	};
 
-	this.onUserJoinDesk=function (deskid,key){		
-		var re=this.isInDesk(deskid);
-		if( re==1 ){
-			this.toC("OnJoinDeskOk", {deskid:deskid,'key':key});
+	this.onUserJoinDesk = function(deskid, key) {
+		var re = this.isInDesk(deskid);
+		if (re == 1) {
+			this.toC("OnJoinDeskOk", {
+				deskid: deskid,
+				'key': key
+			});
 			return true;
-		}else if( re==-1 ) return false;
+		} else if (re == -1) return false;
 
-		this.deskctrl=null;
-		
-		var desk=js_mj.findDesk(deskid);
-		if( desk==null ){
-			this.toC("onError", {"msg":"onUserJoinDesk:创建桌子失败"});
+		this.deskctrl = null;
+
+		var desk = js_mj.findDesk(deskid);
+		if (desk == null) {
+			this.toC("onError", {
+				"msg": "onUserJoinDesk:创建桌子失败"
+			});
 			return false;
 		}
-		if( this.UserJoinDesk(desk) ){
-			this.tr("onUserJoinDesk:uid="+this.uid+","+this.m_sNick);
+		if (this.UserJoinDesk(desk)) {
+			this.tr("onUserJoinDesk:uid=" + this.uid + "," + this.m_sNick);
 			return true;
 		}
 		return false;
 	}
+
+	this.onGameStart = function() {
+		if (this.deskctrl == null) {
+			return;
+		}
+		this.start = true;
+		this.clearAction();
+		this.deskctrl.onGameStart(this);
+		this.deskctrl.SendState(null);
+	};
 
 	this.regNetuser = function(netuser, ip) {
 		this.tr("regNetuser:uid=" + this.uid);
@@ -119,83 +139,97 @@ function DdzUser(suser, uid, ip) {
 		js_sql.query("update b_userinfo set `isol`=1, `loginip`='" + this.ip + "' where `id`=" + this.uid, this, null, null);
 	};
 
-	this.isInDesk=function(deskid){
-		if( this.deskctrl==null ) return 0;
-		var desk=this.deskctrl;
-		this.chairid=desk.isInDesk(this);
-		if( desk.deskid==deskid ){//进入老桌子
+	this.isInDesk = function(deskid) {
+		if (this.deskctrl == null) return 0;
+		var desk = this.deskctrl;
+		this.chairid = desk.isInDesk(this);
+		if (desk.deskid == deskid) { //进入老桌子
 
-			if( !this.UserJoinDesk(desk) ){ 
-				if( this.chairid<0 ) return -1;
-				desk.DelUserByID(this.chairid); 
-				return -1; 
+			if (!this.UserJoinDesk(desk)) {
+				if (this.chairid < 0) return -1;
+				desk.DelUserByID(this.chairid);
+				return -1;
 			}
 			return 1;
 		}
-		if( !js_mj.isUseDesk(desk) ){
-			this.deskctrl=null;
+		if (!js_mj.isUseDesk(desk)) {
+			this.deskctrl = null;
 			return 0;
 		}
-		if( this.chairid<0 ){//不在桌子内
+		if (this.chairid < 0) { //不在桌子内
 
-			this.deskctrl=null;
+			this.deskctrl = null;
 			return 0;
 		}
-		if( this.UserJoinDesk(desk) ) return 1//进入老桌子
+		if (this.UserJoinDesk(desk)) return 1 //进入老桌子
 
-		desk.DelUserByID(this.chairid);//退出
+		desk.DelUserByID(this.chairid); //退出
 
 		return 0;
 	}
 
-	this.UserJoinDesk=function (desk){
-		var r=false;
-		var re=desk.JoinDesk(this);
-		switch(re[0]){
-			case 1://成功加入
-			case 2://用户已加入
+	this.UserJoinDesk = function(desk) {
+		var r = false;
+		var re = desk.JoinDesk(this);
+		switch (re[0]) {
+			case 1: //成功加入
+			case 2: //用户已加入
 
-				this.deskctrl=desk;
-				this.chairid=re[1];
-				this.toC("OnJoinDeskOk", {deskid:desk.deskid,'key':desk.key});
-				r=true;
+				this.deskctrl = desk;
+				this.chairid = re[1];
+				this.toC("OnJoinDeskOk", {
+					deskid: desk.deskid,
+					'key': desk.key
+				});
+				r = true;
 				break;
-			case -10://已满
-				this.toC("onError", {"msg":"人满了，新开一桌吧~~~"});
+			case -10: //已满
+				this.toC("onError", {
+					"msg": "人满了，新开一桌吧~~~"
+				});
 				break;
-			case -100://游戏已经开始,新用户不可进入
+			case -100: //游戏已经开始,新用户不可进入
 
-				this.toC("onError", {"msg":"已经开始了，请到别桌试试~~~"});
+				this.toC("onError", {
+					"msg": "已经开始了，请到别桌试试~~~"
+				});
 				break;
-			case -101://桌子已经关闭
-				this.toC("onError", {"msg":"很抱歉，桌子已经关闭啦~~~"});
+			case -101: //桌子已经关闭
+				this.toC("onError", {
+					"msg": "很抱歉，桌子已经关闭啦~~~"
+				});
 				break;
 		}
-		this.tr("JoinDesk:"+this.chairid);
+		this.tr("JoinDesk:" + this.chairid);
 		//更新数据
 		return r;
 	}
 
-	this.SendUserData=function(){
-		var data={};
-		data['card']=this.netuser.m_Data.card;
-		this.toC("SendUserData",data);
+	this.SendUserData = function() {
+		var data = {};
+		data['card'] = this.netuser.m_Data.card;
+		this.toC("SendUserData", data);
 	}
 
-	this.SendSelf=function(action){
+	this.SendSelf = function(action) {
 		//TODO:重写自身状态。
-		if( this.m_Pai==null ){
-			this.err("SendSelf:uid="+this.uid+"["+action+"]");
+		if (this.m_Pai == null) {
+			this.err("SendSelf:uid=" + this.uid + "[" + action + "]");
 			return;
 		}
-		if( this.deskctrl==null ) return;
+		if (this.deskctrl == null) return;
 		//if( this.deskctrl.m_nGameState==0 ) return;
 
-		var data={};
-		data['vpai']=this.m_Pai.GetMiniVPai(this.m_Pai.vpai);
-		data['mopai']=this.m_Pai.GetMiniPai(this.m_Pai.mopai);
-		data['action']=action;
-		this.toC("SelfPai",data);
+		var data = {};
+		data['vpai'] = this.m_Pai.GetMiniVPai(this.m_Pai.vpai);
+		data['mopai'] = this.m_Pai.GetMiniPai(this.m_Pai.mopai);
+		data['action'] = action;
+		this.toC("SelfPai", data);
+	}
+
+	this.clearAction = function() {
+		this.m_Action.eve = "non";
+		this.m_Action.param = null;
 	}
 
 	this.onInit()

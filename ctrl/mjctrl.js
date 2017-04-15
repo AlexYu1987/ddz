@@ -51,7 +51,7 @@ exports.NewDesk=function(deskid,key,ownerid,rule,num){
 	var desk=exports.findDesk(deskid);
 	if( desk!=null ) return desk;
 
-	var js=require('./mjdesk-nanj');
+	var js=require('./ddzdesk');
 
 	console.log(JSON.stringify(rule));
 	desk=new js(deskid,key,ownerid,rule,num);
