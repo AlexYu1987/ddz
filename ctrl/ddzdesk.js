@@ -35,32 +35,30 @@ function DdzDesk(id, key, owner, rule, num) {
 	this.ownerid = ownerid;
 	this.m_vUser = Array(this.m_nMaxUser);
 	this.m_nState = 0; //游戏等待中 0 叫地主阶段 1 走牌阶段2 一局结束等待2 无效桌子 -1
-	this.m_nGameState = 0; //一局牌状态 1 等待出牌 2 等待吃碰杠胡 3 等待补花
-	this.m_nLunNum = num;
-
+	//回合数
+	this.m_roundNum = num;
+	//本局地主座位号
+	this.m_DZ = -1;
+	//当前走牌用户
 	this.m_CurUser = null;
-	this.m_first = null;//上游
-	this.m_ChgZhuang = true;
-	this.m_ZhuangNum = 0;
-	this.m_vPai = null;
-	this.m_nHuang = 0;
-	this.m_Win = null;
-	this.m_Loser = null;
-	this.m_MoNum = 0;
-	this.m_OutNum = 0;
-	this.m_HuData = null;
-	this.m_GenZhuang = {
-		pai: null,
-		num: 0
-	};
-
-	this.m_BiXia = [false, false];
-
+	//上一局的上游座位号
+	this.m_nFirst = null;
 	this.m_StartTime;
-
+	//叫分人数统计
+	this.m_nJiao = 0;
+	//底分
+	this.m_nBaseFen = 0;
+	//地主的三张底牌
+	this.m_v3Pai = [];
+	//本局牌的倍数
+	this.m_nScale = 1;
+	//当前走牌的牌型,-1牌型错误，1单张，2对子，3三不带，4三带一，5三带一对，6飞机，7顺子，8四带二，9炸弹
+	this.m_nCardType = -1;
+	//本轮次各用户所走的牌。
+	this.m_vOutCard = null;
 	this.m_Rule = {
-		game: "nanj",
-		num: 1
+		game: "ddz",
+		num: 4
 	};
 	this.tr("new MjDesk:" + this.deskid + "," + num);
 
@@ -179,7 +177,7 @@ function DdzDesk(id, key, owner, rule, num) {
 	};
 
 	this.clearDesk = function() {
-
+		//TODO:每局开始清理桌面
 	};
 
 	this.onGameStart = function(user) {
@@ -201,47 +199,128 @@ function DdzDesk(id, key, owner, rule, num) {
 		}
 
 		var user;
-		for(var i=0; i<this.m_vUser; ++i){
-			user=this.m_vUser[i];
-			if (user==null){
+		for (var i = 0; i < this.m_vUser; ++i) {
+			user = this.m_vUser[i];
+			if (user == null) {
 				this.SendUser(null);
 				return;
 			}
 
-			if(user.deskctrl==null){
-				if(user.UserJoinDesk(this)){
+			if (user.deskctrl == null) {
+				if (user.UserJoinDesk(this)) {
 					continue;
 				}
 				this.DelUserByID(i);
 				return;
 			}
 
-			if(user.start==false){
+			if (user.start == false) {
 				this.SendUser(null);
 				return;
 			}
 		}
 
-		this.m_StartTime=new Date().Format("yyyy-MM-dd hh:mm:ss");
-		this.m_nState=1;
-		this.SendAll("GameStart",{lun:this.m_nLunNum});
+		this.m_StartTime = new Date().Format("yyyy-MM-dd hh:mm:ss");
+		this.m_nState = 1;
+		this.SendAll("GameStart", {
+			round: this.m_roundNum
+		});
 		this.startgame();
 	};
 
 	this.startGame = function() {
-		//TODO:开始游戏主体逻辑
-	};
+		/*
+			如果是第一局则初始化桌面用户的分数,
+			清理桌面
+			当前活动用户设置为上局的上游用户
+			洗牌，并给用户发手牌，保留地主的三张底牌
+			设置游戏状态进入叫地主阶段
 
-	this.shuffle = function() {
+		*/
+		if (this.m_roundNum == 0) {
+			this.m_vUser.forEach(function(user) {
+				user.m_nFen = 0;
+				user.m_first = 0;
+			});
+		}
+		this.m_roundNum++;
+		this.clearDesk();
+		this.m_CurUser = this.m_vUser[user.m_nFirst];
+		var vPai = jsCtrl.shuffle();
 
+		//随机取三张放入底牌
+		for (var i = 0; i < this.m_nMaxUser; ++i) {
+			var r = Math.floor(Math.random() * vPai.length);
+			this.m_v3Pai.push(vPai.splice(r, 1));
+		}
+
+		//分发手牌
+		this.m_nMaxUser.forEach(function(user) {
+			//TODO:需要验证下此算法是否正确
+			user.m_vPai = vPai.splice(0, Math.floor(vPai.length / this.m_nMaxUser));
+		});
+
+		this.m_nState = 1;
+		var action = {
+			event: 'StartJiaoDZ'
+		};
+		this.sendDesk(action);
 	};
 
 	this.chuPai = function() {
 
 	};
 
-	this.jiaoFen = function() {
+	this.jiaoDZ = function(user, baseFen) {
+		//状态不是叫地主
+		if (this.m_nState != 1) {
+			return;
+		}
+		//不轮到当前用户叫分
+		if (user != this.m_CurUser) {
+			return;
+		}
+		if(typeof baseFen != 'number' || baseFen < 0 || baseFen > 3) {
+			return;
+		}
 
+		this.m_nJiao ++;
+
+		if (this.m_nJiao == this.m_nMaxUser){
+			if (this.m_nBaseFen == 0 && baseFen == 0) {
+				return;
+			}
+			if (baseFen > this.m_nBaseFen) {
+				this.m_nBaseFen = baseFen;
+				this.m_CurUser = user;
+				this.m_DZ = user.chairid;
+				this.m_nState = 2;
+				this.sendDesk({event:'StartChuPai'});
+			} else
+		} else {
+			//不叫
+			if (baseFen == 0){
+				this.m_CurUser = this.m_vUser[(user.chairid + 1) % this.m_nMaxUser];
+				this.sendDesk({event:'StartJiaoDZ'})
+			} else if()
+		}
+
+		}
+		if (baseFen == 3) {
+			this.m_DZ = user.chairid;
+			this.m_nBaseFen = baseFen;
+			this.m_nState = 2;
+			this.m_CurUser = user;
+			this.sendDesk({
+				event: 'StartChuPai',
+			});
+		} else {
+
+			if (this.baseFen == 1 && user.chairid == 1) {
+
+			}
+		}
+		this.m_nJiao++;
 	};
 
 	this.SendUser = function(action) {
@@ -276,7 +355,7 @@ function DdzDesk(id, key, owner, rule, num) {
 		var data = {};
 		data['deskid'] = this.deskid;
 		data['state'] = this.m_nState;
-		data['lun'] = this.m_nLunNum;
+		data['round'] = this.m_roundNum;
 		data['ju'] = this.m_ZhuangNum;
 		data['zhuang'] = '0';
 		if (this.m_Zhuang != null) data['zhuang'] = this.m_Zhuang.chairid;

@@ -162,39 +162,9 @@ exports.InitHuPai=function(){
 //  this.jiang                 //1 jiang
 //  this.ghua                 //1 杠花
 //  this.from                  // 0自摸 从哪个uid里来
-exports.InitDeskPai=function(){
+exports.shuffle=function(){
 	var vpai=[];
-	var pai;
-	var maxnum=0;
-	var maxtype=6;
-	var painum=4;
-	var j;
-	for( var i=0; i<maxtype; i++ ){
-		switch(i){
-		case 0: maxnum=3; j=0; break;
-		case 1: maxnum=4; j=0; break;
-		case 4: //break;
-		case 3: 
-		case 2: 
-			maxnum=10; j=1; break;
-		case 5: 
-			maxnum=8; j=0; painum=1; break;
-		}
-		for( ; j<maxnum; j++ ){
-			for( var num=0; num<painum; num++){
-				pai={};
-				pai['id']=num*100+i*10+j;
-				pai['type']=i;
-				pai['value']=j;
-				pai['flag']=0;
-				pai['hu']=0;
-				pai['jiang']=0;
-				pai['ghua']=0;
-				pai['from']=0;
-				vpai.push(pai);
-			}
-		}
-	}
+	//TODO:洗牌算法
 	return vpai;
 }
 

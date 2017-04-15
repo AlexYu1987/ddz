@@ -25,6 +25,8 @@ function DdzUser(suser, uid, ip) {
 	this.m_Card = 0;
 	this.m_fen = 0;
 	this.m_closeDesk = 0;
+	//手牌
+	this.m_vPai = [];
 	//TODO:action需要重新设计参数。
 	this.m_Action = {
 		eve: 'non',
@@ -95,7 +97,11 @@ function DdzUser(suser, uid, ip) {
 			uid: this.uid,
 			nick: this.m_sNick
 		});
-	}
+	};
+
+	this.onJiaoDZ = function(baseFen) {
+		this.deskctrl.onJiaoDZ(this, baseFen);
+	};
 
 	this.regNetuser = function(netuser, ip) {
 		this.tr("regNetuser:uid=" + this.uid);
