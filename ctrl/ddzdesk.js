@@ -45,7 +45,7 @@ function DdzDesk(id, key, owner, rule, num) {
 	this.m_nFirst = null;
 	this.m_StartTime;
 	//叫分人数统计
-	this.m_nJiao = 0;
+	this.m_nJiao = 1;
 	//底分
 	this.m_nBaseFen = 0;
 	//地主的三张底牌
@@ -272,55 +272,67 @@ function DdzDesk(id, key, owner, rule, num) {
 	};
 
 	this.jiaoDZ = function(user, baseFen) {
-		//状态不是叫地主
+		/*状态检测，非叫地主阶段此接口无效，非此用户走牌阶段此接口调用无效。
+		 *入参检测,user不能为空，baseFen必须是number类型，大于等于0且小于等于3。
+		 *如果是最后一个用户叫地主，且当前底分还为0，则不能过，且至少叫1分。
+		 *非最后一个叫地主的可以过也可以叫比当前底分更高的分数。
+		 */
 		if (this.m_nState != 1) {
 			return;
 		}
-		//不轮到当前用户叫分
 		if (user != this.m_CurUser) {
 			return;
 		}
-		if(typeof baseFen != 'number' || baseFen < 0 || baseFen > 3) {
+		if (typeof baseFen != 'number' || baseFen < 0 || baseFen > 3) {
 			return;
 		}
 
-		this.m_nJiao ++;
-
-		if (this.m_nJiao == this.m_nMaxUser){
-			if (this.m_nBaseFen == 0 && baseFen == 0) {
-				return;
-			}
-			if (baseFen > this.m_nBaseFen) {
+		if (this.m_nJiao == this.m_nMaxUser) {
+			if (this.m_nBaseFen == 0) {
+				if (baseFen == 0) return;
+				else {
+					this.baseFen = baseFen;
+					this.m_CurUser = user;
+					this.m_DZ = user.chairid;
+					this.jiaoDZOK();
+				}
+			} else if (baseFen > this.m_nBaseFen) {
 				this.m_nBaseFen = baseFen;
 				this.m_CurUser = user;
 				this.m_DZ = user.chairid;
-				this.m_nState = 2;
-				this.sendDesk({event:'StartChuPai'});
-			} else
+			} else {
+				return;
+			}
 		} else {
 			//不叫
-			if (baseFen == 0){
+			if (baseFen == 0) {
 				this.m_CurUser = this.m_vUser[(user.chairid + 1) % this.m_nMaxUser];
-				this.sendDesk({event:'StartJiaoDZ'})
-			} else if()
-		}
-
-		}
-		if (baseFen == 3) {
-			this.m_DZ = user.chairid;
-			this.m_nBaseFen = baseFen;
-			this.m_nState = 2;
-			this.m_CurUser = user;
-			this.sendDesk({
-				event: 'StartChuPai',
-			});
-		} else {
-
-			if (this.baseFen == 1 && user.chairid == 1) {
-
+				this.sendDesk({
+					event: 'StartJiaoDZ'
+				});
+			} else if (baseFen == 3) {
+				this.m_DZ = user.chairid;
+				this.m_nBaseFen = baseFen;
+				this.m_CurUser = user;
+				this.jiaoDZOK();
+			} else if (baseFen > this.m_nBaseFen) {
+				this.m_DZ = user.chairid;
+				this.m_nBaseFen = baseFen;
+				this.m_CurUser = this.m_vUser[(user.chairid + 1) % this.m_nMaxUser];
+				this.sendDesk({
+					event: 'StartJiaoDZ'
+				});
+			} else {
+				return;
 			}
 		}
 		this.m_nJiao++;
+	}
+
+
+
+	this.jiaoDZOK = function() {
+
 	};
 
 	this.SendUser = function(action) {
